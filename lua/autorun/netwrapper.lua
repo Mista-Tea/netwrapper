@@ -43,6 +43,8 @@
 		- April 5th, 2014:	Added to GitHub
 --------------------------------------------------------------------------------]]
 
+print( "[NetWrapper] Initializing netwrapper library" )
+
 local base = "netwrapper/"
 
 if ( SERVER ) then

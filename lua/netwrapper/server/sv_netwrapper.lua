@@ -58,7 +58,7 @@ end )
 net.Receive( "NetWrapperSyncEntity", function( len, ply )
 	local ent = net.ReadEntity()
 	
-	for key, val in ipairs( netwrapper.GetNetVars( ent ) ) do
+	for key, val in pairs( netwrapper.GetNetVars( ent ) ) do
 		netwrapper.SendNetVar( ply, ent, key, val )
 	end
 end )
@@ -74,10 +74,10 @@ end )
 --	 will automatically be removed from the table.
 --]]--
 function netwrapper.SyncClient( ply )
-	for ent, values in ipairs( netwrapper.ents ) do
-		if ( !IsValid( ent ) ) then netwrapper.ents[ ent ] = {} continue; end
+	for ent, values in pairs( netwrapper.ents ) do
+		if ( !IsValid( ent ) ) then netwrapper.ents[ ent ] = nil continue; end
 		
-		for key, value in ipairs( values ) do
+		for key, value in pairs( values ) do
 			if ( IsEntity( value ) and !value:IsValid() ) then netwrapper.ents[ ent ][ key ] = nil continue; end
 			
 			netwrapper.SendNetVar( ply, ent, key, value )

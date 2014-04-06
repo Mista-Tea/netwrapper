@@ -46,6 +46,7 @@ net.Receive( "NetWrapper", function( len )
 	local key = net.ReadString()
 	local id  = net.ReadUInt( 8 )   -- read the prepended type ID that was written automatically by net.WriteType(*)
 	local val = net.ReadType( id ) -- read the data using the corresponding type ID
+
 	ent:SetNetVar( key, val )
 end )
 
