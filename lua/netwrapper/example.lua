@@ -16,10 +16,10 @@
 --[[
 	EXAMPLE:
 	 
-	If you use a round-based gamemode with teams, you might want to network each
-	 player's custom team name to it can be drawn in a HUD hook.
-	 
-	To begin, pick a player you want to network some data with.
+	If you use a round-based gamemode with teams, you may have a case where you 
+	 want to network each player's custom team name so it can be drawn in a HUDPaint hook.
+	
+	To test out the functionality of the netwrapper library, choose a player entity.
 	
 	If you or someone else is currently on your server, you can use Entity(1) to get a player entity.
 	
@@ -31,7 +31,7 @@ Entity(1):SetNetVar( "TeamName", "Example Team" )
 --[[
 	We've just networked the TeamName of this player between the server and any connected clients.
 	
-	To retrieve the value on either the server or client, do the following:
+	To retrieve this value on either the server or client, do the following:
 ]]
 
 Entity(1):GetNetVar( "TeamName" )
@@ -39,10 +39,13 @@ Entity(1):GetNetVar( "TeamName" )
 --[[
 	This will return the string, "Example Team".
 	
-	You can change the type of value stored at the "TeamName" to just about anything:
+	You can change the type of value stored at the "TeamName" key to amy value type supported by the
+	 net library.
+	 
+	 Here are some examples:
 ]]
 
-Entity(1):SetNetVar( "TeamName", Vector(123,123,123) ) -- now it returns a vector
+Entity(1):SetNetVar( "TeamName", Vector(123,123,123) ) -- now TeamName returns a vector
 
 Entity(1):SetNetVar( "TeamName", Color(255,0,0,100) ) -- now a table
 
