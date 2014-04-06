@@ -83,9 +83,9 @@ end
 --
 --	netwrapper.GetNetVars( entity )
 --
---	Retrieves any networked data on the given entity, or nil if nothing
---	 has been networked on the entity yet.
+--	Retrieves any networked data on the given entity, or an empty table if 
+--	 nothing has been networked on the entity yet.
 --]]--
 function netwrapper.GetNetVars( ent )
-	return netwrapper.ents[ ent ]
+	return netwrapper.ents[ ent ] or {}
 end

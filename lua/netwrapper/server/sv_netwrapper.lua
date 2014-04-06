@@ -58,10 +58,7 @@ end )
 net.Receive( "NetWrapperSyncEntity", function( len, ply )
 	local ent = net.ReadEntity()
 	
-	local vars = netwrapper.GetNetVars( ent )
-	if ( !vars ) then return; end
-	
-	for key, val in pairs( vars ) do
+	for key, val in ipairs( netwrapper.GetNetVars( ent ) ) do
 		netwrapper.SendNetVar( ply, ent, key, val )
 	end
 end )
@@ -78,7 +75,7 @@ end )
 --]]--
 function netwrapper.SyncClient( ply )
 	for ent, values in ipairs( netwrapper.ents ) do
-		if ( !IsValid( ent ) ) then netwrapper.ents[ ent ] = nil continue; end
+		if ( !IsValid( ent ) ) then netwrapper.ents[ ent ] = {} continue; end
 		
 		for key, value in ipairs( values ) do
 			if ( IsEntity( value ) and !value:IsValid() ) then netwrapper.ents[ ent ][ key ] = nil continue; end
