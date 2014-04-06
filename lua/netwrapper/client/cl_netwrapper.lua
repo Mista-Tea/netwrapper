@@ -23,8 +23,6 @@ netwrapper = netwrapper or {}
 --		Localized Variables 
 --------------------------------------------------------------------------]]--
 
-local ENTITY = FindMetaTable( "Entity" )
-
 local net  = net
 local hook = hook
 
