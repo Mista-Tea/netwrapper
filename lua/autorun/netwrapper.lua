@@ -52,7 +52,6 @@ if ( SERVER ) then
 
 	-- Shared functions
 	include( base.."shared/sh_netwrapper.lua" )
-	AddCSLuaFile( base.."shared/sh_netwrapper.lua" )
 
 	-- Client functions
 	AddCSLuaFile( base.."client/cl_netwrapper.lua" )
