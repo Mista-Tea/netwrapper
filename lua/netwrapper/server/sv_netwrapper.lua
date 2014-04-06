@@ -24,10 +24,11 @@ netwrapper.ents = netwrapper.ents or {}
 --		Localized Functions 
 --------------------------------------------------------------------------]]--
 
-local net     = net
-local util    = util
-local ipairs  = ipairs
-local IsValid = IsValid
+local net      = net
+local util     = util
+local pairs    = pairs
+local IsValid  = IsValid
+local IsEntity = IsEntity
 
 --[[--------------------------------------------------------------------------
 --		Namespace Functions
