@@ -21,7 +21,7 @@
 		To network a value on an entity, simply use the ENTITY:SetNetVar function.
 		
 		[EXAMPLE] To set a networked variable on a connected player, you could
-		do the following:
+		do the following on from your server console:
 			
 			Entity(1):SetNetVar( "TeamName", "Example Team" )
 			
@@ -45,12 +45,12 @@
 
 local base = "netwrapper/"
 
--- Netwrapper server functions
+-- Server functions
 include( base.."server/sv_netwrapper.lua" )
 
--- Netwrapper shared functions
+-- Shared functions
 include( base.."shared/sh_netwrapper.lua" )
 AddCSLuaFile( base.."shared/sh_netwrapper.lua" )
 
--- Netwrapper client functions
+-- Client functions
 AddCSLuaFile( base.."client/cl_netwrapper.lua" )
