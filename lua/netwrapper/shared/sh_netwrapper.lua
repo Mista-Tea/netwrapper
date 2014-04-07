@@ -36,56 +36,73 @@ local ENTITY = FindMetaTable( "Entity" )
 --
 --	ENTITY:SetNetVar( string, * )
 --
---	Sets the value at the associated key on the entity.
---	 Value types can be nearly anything, e.g., string, number, table, angle, vector.
+--	Stores the key/value pair of the entity into a table so that we can
+--	 retrieve them with ENTITY:GetNetVar( key ), and to network the data with any 
+--	 clients that connect after the data has initially been networked.
+--
+--	Value types can be anything supported by the net library, 
+--	 e.g., string, number, table, angle, vector, boolean, entity
 --
 --	Setting a new value on the entity using the same key will replace the original value.
 --	 This allows you to change the value's type without having to use a different function,
---	 unlike the ENTITY:SetNetworked* library.
---
---	This will also store the entity/key/value in a table so that we can network
---	 the data to any clients that connect after the values have initially been networked.
+--	 unlike the ENTITY:SetNW* library.
 --]]--
 function ENTITY:SetNetVar( key, value )
-	netwrapper.StoreNetVar( self, key, value )
+	netwrapper.StoreNetVar( self:EntIndex(), key, value )
 	
-	if ( SERVER ) then
-		netwrapper.BroadcastNetVar( self, key, value )
+	if ( SERVER ) then 
+		netwrapper.BroadcastNetVar( self:EntIndex(), key, value )
 	end
 end
 
 --[[--------------------------------------------------------------------------
 --
---	ENTITY:GetNetVar( string )
+--	ENTITY:GetNetVar( string, * )
 --
---	Returns the value of the associated key from the entity, or nil if 
---	 this key has not been set yet.
+--	Returns:
+--	    the value of the associated key from the entity,
+--	 OR the default value if this key hasn't been set and the default value was provided,
+--	 OR nil if no default was provided and this key hasn't been set.
 --]]--
-function ENTITY:GetNetVar( key )
-	local values = netwrapper.GetNetVars( self )
-	return (values and values[ key ]) or nil
+function ENTITY:GetNetVar( key, default )
+	local values = netwrapper.GetNetVars( self:EntIndex() )
+	return (values and values[ key ]) or default
 end
 
 --[[--------------------------------------------------------------------------
 --
---	netwrapper.StoreNetVar( entity, string, * )
+--	netwrapper.StoreNetVar( int, string, * )
 --
 --	Stores the key/value pair of the entity into a table so that we can
---	 network the data with any clients that connect afterward.
+--	 retrieve them with ENTITY:GetNetVar( key ), and to network the data with any 
+--	 clients that connect after the data has initially been networked.
 --]]--
-function netwrapper.StoreNetVar( ent, key, value )
+function netwrapper.StoreNetVar( id, key, value )
 	netwrapper.ents = netwrapper.ents or {}
-	netwrapper.ents[ ent ] = netwrapper.ents[ ent ] or {}
-	netwrapper.ents[ ent ][ key ] = value
+	netwrapper.ents[ id ] = netwrapper.ents[ id ] or {}
+	netwrapper.ents[ id ][ key ] = value
 end
 
 --[[--------------------------------------------------------------------------
 --
---	netwrapper.GetNetVars( entity )
+--	netwrapper.GetNetVars( id )
 --
---	Retrieves any networked data on the given entity, or an empty table if 
+--	Retrieves any networked data on the given entity index, or an empty table if 
 --	 nothing has been networked on the entity yet.
 --]]--
-function netwrapper.GetNetVars( ent )
-	return netwrapper.ents[ ent ] or {}
+function netwrapper.GetNetVars( id )
+	return netwrapper.ents[ id ] or {}
+end
+
+--[[--------------------------------------------------------------------------
+--
+--	netwrapper.RemoveNetVars( id )
+--
+--	Removes any data stored at the entity index. When a player disconnects or
+--	 an entity is removed, its index in the table will be removed to ensure that
+--	 the next entity to use the same index does not use the first entity's data
+--	 and become corrupted.
+--]]--
+function netwrapper.RemoveNetVars( id )
+	netwrapper.ents[ id ] = nil
 end

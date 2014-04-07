@@ -27,7 +27,6 @@ netwrapper.ents = netwrapper.ents or {}
 local net      = net
 local util     = util
 local pairs    = pairs
-local IsValid  = IsValid
 local IsEntity = IsEntity
 
 --[[--------------------------------------------------------------------------
@@ -35,7 +34,6 @@ local IsEntity = IsEntity
 --------------------------------------------------------------------------]]--
 
 util.AddNetworkString( "NetWrapper" )
-util.AddNetworkString( "NetWrapperSyncEntity" )
 
 --[[--------------------------------------------------------------------------
 --
@@ -50,52 +48,37 @@ end )
 
 --[[--------------------------------------------------------------------------
 --
---	Net - NetWrapperSyncEntity( entity )
---
---	Received when an entity is created on the client.
---	 This will attempt to find any networked data on the given entity
---	 and sync it back to the client.
---]]--
-net.Receive( "NetWrapperSyncEntity", function( len, ply )
-	local ent = net.ReadEntity()
-	
-	for key, val in pairs( netwrapper.GetNetVars( ent ) ) do
-		netwrapper.SendNetVar( ply, ent, key, val )
-	end
-end )
-
---[[--------------------------------------------------------------------------
---
 --	netwrapper.SyncClient( player )
 --
 --	Loops through every entity currently networked and sends the networked
 --	 data to the client.
 --
---	While looping, any NULL entities (disconnected players, removed entities) 
---	 will automatically be removed from the table.
+--	While looping, any values that are NULL (disconnected players, removed entities) 
+--	 will automatically be removed from the table and not synced to the client.
 --]]--
 function netwrapper.SyncClient( ply )
-	for ent, values in pairs( netwrapper.ents ) do
-		if ( !IsValid( ent ) ) then netwrapper.ents[ ent ] = nil continue; end
-		
+	for id, values in pairs( netwrapper.ents ) do			
 		for key, value in pairs( values ) do
-			if ( IsEntity( value ) and !value:IsValid() ) then netwrapper.ents[ ent ][ key ] = nil continue; end
+			if ( IsEntity( value ) and !value:IsValid() ) then 
+				netwrapper.ents[ id ][ key ] = nil 
+				continue; 
+			end
 			
-			netwrapper.SendNetVar( ply, ent, key, value )
+			netwrapper.SendNetVar( ply, id, key, value )
 		end			
 	end
 end
 
 --[[--------------------------------------------------------------------------
 --
---	netwrapper.BroadcastNetVar( entity, string, * )
+--	netwrapper.BroadcastNetVar( int, string, * )
 --
---	Broadcasts a net message to all connected clients that contains the
---	 key/value pair to assign on the given entity.
+--	Sends a net message to all connectect clients containing the
+--	 key/value pair to assign on the associated entity.
 --]]--
-function netwrapper.BroadcastNetVar( ent, key, value )
+function netwrapper.BroadcastNetVar( id, key, value )
 	net.Start( "NetWrapper" )
-		net.WriteEntity( ent )
+		net.WriteUInt( id, 16 )
 		net.WriteString( key )
 		net.WriteType( value )
 	net.Broadcast()
@@ -103,14 +86,14 @@ end
 
 --[[--------------------------------------------------------------------------
 --
---	netwrapper.SendNetVar( player, entity, string, * )
+--	netwrapper.SendNetVar( player, int, string, * )
 --
---	Sends a net message to the specified client that contains the
---	 key/value pair to assign on the given entity.
+--	Sends a net message to the specified client containing the
+--	 key/value pair to assign on the associated entity.
 --]]--
-function netwrapper.SendNetVar( ply, ent, key, value )
+function netwrapper.SendNetVar( ply, id, key, value )
 	net.Start( "NetWrapper" )
-		net.WriteEntity( ent )
+		net.WriteUInt( id, 16 )
 		net.WriteString( key )
 		net.WriteType( value )
 	net.Send( ply )

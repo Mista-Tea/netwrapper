@@ -40,14 +40,13 @@ local hook = hook
 --	 on multiple functions (like ReadEntity, ReadString, etc).
 --]]--
 net.Receive( "NetWrapper", function( len )
-	local ent = net.ReadEntity()
-	local key = net.ReadString()
-	local id  = net.ReadUInt( 8 )   -- read the prepended type ID that was written automatically by net.WriteType(*)
-	local val = net.ReadType( id ) -- read the data using the corresponding type ID
+	local entid  = net.ReadUInt( 16 )
+	local key    = net.ReadString()
+	local typeid = net.ReadUInt( 8 )      -- read the prepended type ID that was written automatically by net.WriteType(*)
+	local value  = net.ReadType( typeid ) -- read the data using the corresponding type ID
 
-	ent:SetNetVar( key, val )
+	netwrapper.StoreNetVar( entid, key, value )
 end )
-
 --[[--------------------------------------------------------------------------
 --
 --	Hook - InitPostEntity
@@ -64,16 +63,15 @@ end )
 --
 --	Hook - OnEntityCreated
 --
---	This hook is called any time an entity is created and polls the server
---	 to see if there is any networked data on the entity that we need to sync.
---
---	When creating a new entity on the server and instantly assigning networked
---	 values using this library, there is a very short time period where the entity
---	 has not been created on the client yet. By using this hook, we ensure that the
---	 entity is fully initialized before attempting to retrieve any networked values.
+--	This hook is called every time an entity is created. This will automatically
+--	 assign any networked values that are associated with the entity's EntIndex.
+--	 This saves us the trouble of polling the server to retrieve the values.
 --]]--
 hook.Add( "OnEntityCreated", "NetWrapperSync", function( ent )
-	net.Start( "NetWrapperSyncEntity" )
-		net.WriteEntity( ent )
-	net.SendToServer()
+	local id = ent:EntIndex()
+	local values = netwrapper.GetNetVars( id )
+	
+	for key, value in pairs( values ) do
+		ent:SetNetVar( key, value )
+	end
 end )
