@@ -29,8 +29,10 @@
 		SOFTWARE.
 			
 	Changelog:
-		- April 7th, 2014:	Created
-		- April 7th, 2014:	Added to GitHub
+		- April 7th, 2014:
+			- Created
+			- Added to GitHub
+			- Added license in file to make copying into addons not require the LICENSE file
 ----------------------------------------------------------------------------]]
 
 print( "[NetWrapper] Initializing netwrapper library" )
