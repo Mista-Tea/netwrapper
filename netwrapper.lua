@@ -33,6 +33,7 @@
 			- Created
 			- Added to GitHub
 			- Added license in file to make copying into addons not require the LICENSE file
+			- Changed storing/sending Entities to EntIndex
 ----------------------------------------------------------------------------]]
 
 print( "[NetWrapper] Initializing netwrapper library" )
