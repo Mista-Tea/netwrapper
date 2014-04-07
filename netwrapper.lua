@@ -58,7 +58,6 @@ local net      = net
 local hook     = hook
 local util     = util
 local pairs    = pairs
-local IsValid  = IsValid
 local IsEntity = IsEntity
 
 --[[--------------------------------------------------------------------------
@@ -68,44 +67,36 @@ local IsEntity = IsEntity
 if ( SERVER ) then 
 
 	util.AddNetworkString( "NetWrapper" )
-	util.AddNetworkString( "NetWrapperSyncEntity" )
 
 	--\\----------------------------------------------------------------------\\--
 	net.Receive( "NetWrapper", function( len, ply )
 		netwrapper.SyncClient( ply )
 	end )
 	--\\----------------------------------------------------------------------\\--
-	net.Receive( "NetWrapperSyncEntity", function( len, ply )
-		local ent = net.ReadEntity()
-		
-		for key, val in pairs( netwrapper.GetNetVars( ent ) ) do
-			netwrapper.SendNetVar( ply, ent, key, val )
-		end
-	end )
-	--\\----------------------------------------------------------------------\\--
 	function netwrapper.SyncClient( ply )
-		for ent, values in pairs( netwrapper.ents ) do
-			if ( !IsValid( ent ) ) then netwrapper.ents[ ent ] = nil continue; end
-			
+		for id, values in pairs( netwrapper.ents ) do			
 			for key, value in pairs( values ) do
-				if ( IsEntity( value ) and !value:IsValid() ) then netwrapper.ents[ ent ][ key ] = nil continue; end
+				if ( IsEntity( value ) and !value:IsValid() ) then 
+					netwrapper.ents[ id ][ key ] = nil 
+					continue; 
+				end
 				
-				netwrapper.SendNetVar( ply, ent, key, value )
+				netwrapper.SendNetVar( ply, id, key, value )
 			end			
 		end
 	end
 	--\\----------------------------------------------------------------------\\--
-	function netwrapper.BroadcastNetVar( ent, key, value )
+	function netwrapper.BroadcastNetVar( id, key, value )
 		net.Start( "NetWrapper" )
-			net.WriteEntity( ent )
+			net.WriteUInt( id, 16 )
 			net.WriteString( key )
 			net.WriteType( value )
 		net.Broadcast()
 	end
 	--\\----------------------------------------------------------------------\\--
-	function netwrapper.SendNetVar( ply, ent, key, value )
+	function netwrapper.SendNetVar( ply, id, key, value )
 		net.Start( "NetWrapper" )
-			net.WriteEntity( ent )
+			net.WriteUInt( id, 16 )
 			net.WriteString( key )
 			net.WriteType( value )
 		net.Send( ply )
@@ -114,12 +105,12 @@ if ( SERVER ) then
 elseif ( CLIENT ) then
 
 	net.Receive( "NetWrapper", function( len )
-		local ent = net.ReadEntity()
-		local key = net.ReadString()
-		local id  = net.ReadUInt( 8 )  -- read the prepended type ID that was written automatically by net.WriteType(*)
-		local val = net.ReadType( id ) -- read the data using the corresponding type ID
+		local entid  = net.ReadUInt( 16 )
+		local key    = net.ReadString()
+		local typeid = net.ReadUInt( 8 )
+		local value  = net.ReadType( typeid )
 
-		ent:SetNetVar( key, val )
+		netwrapper.StoreNetVar( entid, key, value )
 	end )
 	--\\----------------------------------------------------------------------\\--
 	hook.Add( "InitPostEntity", "NetWrapperSync", function()
@@ -128,33 +119,44 @@ elseif ( CLIENT ) then
 	end )
 	--\\----------------------------------------------------------------------\\--
 	hook.Add( "OnEntityCreated", "NetWrapperSync", function( ent )
-		net.Start( "NetWrapperSyncEntity" )
-			net.WriteEntity( ent )
-		net.SendToServer()
+		local id = ent:EntIndex()
+		local values = netwrapper.GetNetVars( id )
+		
+		for key, value in pairs( values ) do
+			ent:SetNetVar( key, value )
+		end
 	end )
-	--\\----------------------------------------------------------------------\\--
+	
 end
 
 --\\----------------------------------------------------------------------\\--
+hook.Add( "EntityRemoved", "NetWrapperRemove", function( ent )
+	netwrapper.RemoveNetVars( ent:EntIndex() )
+end )
+--\\----------------------------------------------------------------------\\--
 function ENTITY:SetNetVar( key, value )
-	netwrapper.StoreNetVar( self, key, value )
+	netwrapper.StoreNetVar( self:EntIndex(), key, value )
 	
-	if ( SERVER ) then
-		netwrapper.BroadcastNetVar( self, key, value )
+	if ( SERVER ) then 
+		netwrapper.BroadcastNetVar( self:EntIndex(), key, value )
 	end
 end
 --\\----------------------------------------------------------------------\\--
-function ENTITY:GetNetVar( key )
-	local values = netwrapper.GetNetVars( self )
-	return (values and values[ key ]) or nil
+function ENTITY:GetNetVar( key, default )
+	local values = netwrapper.GetNetVars( self:EntIndex() )
+	return (values and values[ key ]) or default
 end
 --\\----------------------------------------------------------------------\\--
-function netwrapper.StoreNetVar( ent, key, value )
+function netwrapper.StoreNetVar( id, key, value )
 	netwrapper.ents = netwrapper.ents or {}
-	netwrapper.ents[ ent ] = netwrapper.ents[ ent ] or {}
-	netwrapper.ents[ ent ][ key ] = value
+	netwrapper.ents[ id ] = netwrapper.ents[ id ] or {}
+	netwrapper.ents[ id ][ key ] = value
 end
 --\\----------------------------------------------------------------------\\--
-function netwrapper.GetNetVars( ent )
-	return netwrapper.ents[ ent ] or {}
+function netwrapper.GetNetVars( id )
+	return netwrapper.ents[ id ] or {}
+end
+--\\----------------------------------------------------------------------\\--
+function netwrapper.RemoveNetVars( id )
+	netwrapper.ents[ id ] = nil
 end
