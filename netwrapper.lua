@@ -68,10 +68,15 @@ local IsEntity = IsEntity
 if ( SERVER ) then 
 
 	util.AddNetworkString( "NetWrapper" )
+	util.AddNetworkString( "NetWrapperRemove" )
 
 	--\\----------------------------------------------------------------------\\--
 	net.Receive( "NetWrapper", function( len, ply )
 		netwrapper.SyncClient( ply )
+	end )
+	--\\----------------------------------------------------------------------\\--
+	hook.Add( "EntityRemoved", "NetWrapperRemove", function( ent )
+		netwrapper.RemoveNetVars( ent:EntIndex() )
 	end )
 	--\\----------------------------------------------------------------------\\--
 	function netwrapper.SyncClient( ply )
@@ -114,6 +119,11 @@ elseif ( CLIENT ) then
 		netwrapper.StoreNetVar( entid, key, value )
 	end )
 	--\\----------------------------------------------------------------------\\--
+	net.Receive( "NetWrapperRemove", function( len )
+		local entid = net.ReadUInt( 16 )
+		netwrapper.RemoveNetVars( entid )
+	end )
+	--\\----------------------------------------------------------------------\\--
 	hook.Add( "InitPostEntity", "NetWrapperSync", function()
 		net.Start( "NetWrapper" )
 		net.SendToServer()
@@ -130,10 +140,7 @@ elseif ( CLIENT ) then
 	
 end
 
---\\----------------------------------------------------------------------\\--
-hook.Add( "EntityRemoved", "NetWrapperRemove", function( ent )
-	netwrapper.RemoveNetVars( ent:EntIndex() )
-end )
+
 --\\----------------------------------------------------------------------\\--
 function ENTITY:SetNetVar( key, value )
 	netwrapper.StoreNetVar( self:EntIndex(), key, value )
@@ -160,4 +167,10 @@ end
 --\\----------------------------------------------------------------------\\--
 function netwrapper.RemoveNetVars( id )
 	netwrapper.ents[ id ] = nil
+
+	if ( SERVER ) then
+		net.Start( "NetWrapperRemove" )
+			net.WriteUInt( id, 16 )
+		net.Broadcast()
+	end
 end
