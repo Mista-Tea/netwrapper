@@ -47,6 +47,20 @@ net.Receive( "NetWrapper", function( len )
 
 	netwrapper.StoreNetVar( entid, key, value )
 end )
+
+--[[--------------------------------------------------------------------------
+--
+--	Net - NetWrapperRemove( uint )
+--
+--	Removes any networked data on the id-associated entity. This will occur
+--	 any time an entity has been removed and the EntityRemoved hook has been
+--	 called on the server.
+--]]--
+net.Receive( "NetWrapperRemove", function( len )
+	local entid  = net.ReadUInt( 16 )
+	netwrapper.RemoveNetVars( entid )
+end )
+
 --[[--------------------------------------------------------------------------
 --
 --	Hook - InitPostEntity

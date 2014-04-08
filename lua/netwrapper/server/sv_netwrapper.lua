@@ -34,6 +34,7 @@ local IsEntity = IsEntity
 --------------------------------------------------------------------------]]--
 
 util.AddNetworkString( "NetWrapper" )
+util.AddNetworkString( "NetWrapperRemove" )
 
 --[[--------------------------------------------------------------------------
 --
@@ -44,6 +45,19 @@ util.AddNetworkString( "NetWrapper" )
 --]]--
 net.Receive( "NetWrapper", function( len, ply )
 	netwrapper.SyncClient( ply )
+end )
+
+--[[--------------------------------------------------------------------------
+--
+--	Hook - EntityRemoved( entity )
+--	
+--	Called when an entity has been removed. This will automatically remove the
+--	 data at the entity's index if any was being networked. This will prevent
+--	 data corruption where a future entity may be using the data from a previous
+--	 entity that used the same EntIndex
+--]]--
+hook.Add( "EntityRemoved", "NetWrapperRemove", function( ent )
+	netwrapper.RemoveNetVars( ent:EntIndex() )
 end )
 
 --[[--------------------------------------------------------------------------
