@@ -66,7 +66,7 @@ end
 --]]--
 function ENTITY:GetNetVar( key, default )
 	local values = netwrapper.GetNetVars( self:EntIndex() )
-	return (values and values[ key ]) or default
+	if ( values[ key ] ~= nil ) then return values[ key ] else return default end
 end
 
 --[[--------------------------------------------------------------------------
