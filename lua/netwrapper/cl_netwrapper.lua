@@ -171,3 +171,18 @@ net.Receive( "NetWrapperRequest", function( bits )
 	
 	Entity( id ):SetNetRequest( key, value )
 end )
+
+
+--[[--------------------------------------------------------------------------
+--
+--	Net - NetWrapperClear
+--
+--	Removes any data stored at the entity index. When a player disconnects or
+--	 an entity is removed, its index in the table will be removed to ensure that
+--	 the next entity to use the same index does not use the first entity's data
+--	 and become corrupted.
+--]]--
+net.Receive( "NetWrapperClear", function( bits )
+	local id = net.ReadUInt( 16 )
+	netwrapper.ClearData( id )
+end )

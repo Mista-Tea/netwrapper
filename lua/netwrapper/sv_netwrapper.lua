@@ -35,6 +35,7 @@ local FindMetaTable = FindMetaTable
 
 util.AddNetworkString( "NetWrapperVar" )
 util.AddNetworkString( "NetWrapperRequest" )
+util.AddNetworkString( "NetWrapperClear" )
 
 local ENTITY = FindMetaTable( "Entity" )
 

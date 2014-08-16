@@ -228,4 +228,10 @@ end
 function netwrapper.ClearData( id )
 	netwrapper.ents[ id ]     = nil
 	netwrapper.requests[ id ] = nil
+
+	if ( SERVER ) then
+		net.Start( "NetWrapperClear" )
+			net.WriteUInt( id, 16 )
+		net.Broadcast()
+	end
 end
