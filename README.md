@@ -6,8 +6,8 @@ networking without needing to care about the type of data you are networking (un
 and without needing to create dozens of networked strings for net messages.
 
 There are 2 ways to network data with the NetWrapper library:
-	* Net Vars
-	* Net Requests
+* Net Vars
+* Net Requests
 
 #### Net Vars
 If you are looking to replace your existing scripts' use of the ENTITY:SetNW*/ENTITY:SetDT* functions, Net Vars
@@ -21,12 +21,18 @@ Once these values have been broadcasted, all connected clients will be able to r
 would with the standard networking libraries.
 
 * Setting networked values:
-	
-	ENTITY:SetNetVar( key, value ) -- if run on the server, this key/value pair will be networked to all clients
-	
+
+```
+-- if run on the server, this key/value pair will be networked to all clients
+ENTITY:SetNetVar( key, value )
+```
+
 * Getting networked values:
-	
-	ENTITY:GetNetVar( key, default ) -- if run on the client, this will attempt to grab the value stored at the key
+
+```
+-- if run on the client, this will attempt to grab the value stored at the key
+ENTITY:GetNetVar( key, default )
+```
 	
 Where 'default' is the default value you would like returned if the key doesn't exist.
 If a default value isn't provided and the key doesn't exist, nil will be returned.
@@ -45,9 +51,11 @@ key/value pair for the title.
 If you wanted to show the player's title in a GM:PostPlayerDraw hook, you could do something like the following:
 ```
 hook.Add( "PostPlayerDraw", "ShowPlayerTitle", function( ply )
-
-    local title = ply:GetNetVar( "Title" ) -- retrieve the player's title if one has been networked, otherwise returns nil
-    if ( !title ) then return end -- if a title hasn't been networked yet, don't try drawing it
+    -- retrieve the player's title if one has been networked, otherwise returns nil
+    -- if a title hasn't been networked yet, don't try drawing it
+    
+    local title = ply:GetNetVar( "Title" )
+    if ( !title ) then return end 
     
     draw.SimpleText( title, ...  -- etc
 
