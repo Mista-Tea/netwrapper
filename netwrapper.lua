@@ -57,9 +57,6 @@ local CreateConVar = CreateConVar
 local FindMetaTable = FindMetaTable
 local GetConVarNumber = GetConVarNumber
 
-util.AddNetworkString( "NetWrapperVar" )
-util.AddNetworkString( "NetWrapperRequest" )
-
 local ENTITY = FindMetaTable( "Entity" )
 
 netwrapper.Delay = CreateConVar( "netwrapper_request_delay", 5, bit.bor( FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_SERVER_CAN_EXECUTE ), "The number of seconds before a client can send a net request to the server"  )
@@ -71,8 +68,8 @@ netwrapper.MaxRequests = CreateConVar( "netwrapper_max_requests",  -1, bit.bor( 
 
 if ( SERVER ) then 
 
-	util.AddNetworkString( "NetWrapper" )
-	util.AddNetworkString( "NetWrapperRemove" )
+	util.AddNetworkString( "NetWrapperVar" )
+	util.AddNetworkString( "NetWrapperRequest" )
 
 	--[[----------------------------------------------------------------------]]--
 	net.Receive( "NetWrapperVar", function( len, ply )
