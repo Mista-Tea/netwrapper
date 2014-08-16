@@ -172,6 +172,6 @@ end
 -- 	 data corruption where a future entity may be using the data from a previous
 --	 entity that used the same EntIndex
 --]]--
-hook.Add( "EntityRemoved", "NetWrapperRemove", function( ent )
+hook.Add( "EntityRemoved", "NetWrapperClear", function( ent )
 	netwrapper.ClearData( ent:EntIndex() )
 end )
