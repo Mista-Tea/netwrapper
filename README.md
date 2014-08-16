@@ -171,4 +171,4 @@ use ENTITY:SendNetRequest( key ) to network the value.
 ### Q: What happens to the networked data on a player that disconnected, or an entity that was removed? 
 
 A: When a player disconnects or an entity is removed, the netwrapper library will automatically sanitize its tables by 
-using the GM:EntityRemoved hook on both the client and the server and removing any data it currently has networked with that entity.
+using the GM:EntityRemoved hook on the server and removing any data it currently has networked with that entity. The server will then send a net message to the client informing them to sanitize their clientside tables.
