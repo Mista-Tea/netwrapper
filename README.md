@@ -139,18 +139,18 @@ What you CAN network:
 
 A: 
 ##### For Net Vars:
-Every time you use ENTITY:SetNetVar() from the server, the data will be networked to any clients via net message.
+Every time you use ENTITY:SetNetVar( key, value ) from the server, the data will be networked to any clients via net message.
 
 If you set a value on a player and then change that value 5 minutes later, the data will have been broadcasted only 2 times
 over the span of that 5 minutes.
 
-However, this does mean that if you use ENTITY:SetNetVar() in a think hook, it will be broadcasting net messages every frame. 
+However, this does mean that if you use ENTITY:SetNetVar( key value ) in a think hook, it will be broadcasting net messages every frame. 
 
 As with any other function, be sure to set networked data only as often as you need to. Think hooks should typically be 
 avoided if you plan on networking large amounts of data on a large amount of entities/players.
 
 ##### For Net Requests:
-Whereas Net Vars are automatically broadcasted to clients and synced to connecting clients during GM:InitPostEntity, Net Requests are only networked
+Whereas Net Vars are automatically broadcasted to connected clients, and synced to connecting clients during GM:InitPostEntity, Net Requests are only networked
 on a 'need-to-know' basis, which significantly reduces the amount of network traffic that connecting players receive.
 
 ---------------------------------------------------------------------------------------------------------------------------
@@ -164,8 +164,8 @@ the server that requests any data that is currently being networked on any entit
 This happens automatically so that you don't have to rebroadcast the data yourself.
 
 ##### For Net Requests:
-net Requests are not networked to the client unless they specifically ask the server for a value from an entity. You must manually
-use ENTITY:SendNetRequest() to network the value.
+Net Requests are not networked to the client unless they specifically ask the server for a value from an entity. You must manually
+use ENTITY:SendNetRequest( key ) to network the value.
 
 ---------------------------------------------------------------------------------------------------------------------------
 ### Q: What happens to the networked data on a player that disconnected, or an entity that was removed? 
