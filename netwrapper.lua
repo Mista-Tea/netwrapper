@@ -70,7 +70,8 @@ if ( SERVER ) then
 
 	util.AddNetworkString( "NetWrapperVar" )
 	util.AddNetworkString( "NetWrapperRequest" )
-
+	util.AddNetworkString( "NetWrapperClear" )
+	
 	--[[----------------------------------------------------------------------]]--
 	net.Receive( "NetWrapperVar", function( len, ply )
 		netwrapper.SyncClient( ply )
