@@ -78,12 +78,16 @@ to the client only when they ask for it (such as when they look directly at it).
 
 * Setting net requests:
 
-	ENTITY:SetNetRequest( key, value ) -- if run on the server, this key/value pair will be stored in a serverside table that the client can request from
+```
+ENTITY:SetNetRequest( key, value ) -- if run on the server, this key/value pair will be stored in a serverside table that the client can request from
+```
 	
 * Getting net requests:
 
-	ENTITY:SendNetRequest( key ) -- when run on the client, this will send a net message to the server asking for the value stored on the entity at the given key
-	ENTITY:GetNetRequest( key, default ) -- once the client has received the value from the server, subsequent calls to ENTITY:GetNetRequest() will return the value
+```
+ENTITY:SendNetRequest( key ) -- when run on the client, this will send a net message to the server asking for the value stored on the entity at the given key
+ENTITY:GetNetRequest( key, default ) -- once the client has received the value from the server, subsequent calls to ENTITY:GetNetRequest() will return the value
+```
 
 Where 'default' is the default value you would like returned if the key doesn't exist.
 If a default value isn't provided and the key doesn't exist, nil will be returned.
