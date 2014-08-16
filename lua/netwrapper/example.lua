@@ -48,12 +48,12 @@ elseif ( CLIENT ) then
 		
 		local owner = ent:GetNetVar( "Owner", "N/A" ) -- get the owner's name, but if it hasn't been networked to us yet, use N/A
 		
-		surface.SetFont( "Trebuchet MS" )
+		surface.SetFont( "default" )
 		local w, h = surface.GetTextSize( owner )
 		local x = ScrW() - w - 15
 		local y = ScrH() / 2.3
 		
-		draw.SimpleText( owner, "Trebuchet MS", x, y, color_white, 0, 0 )
+		draw.SimpleText( owner, "default", x, y, color_white, 0, 0 )
 	
 	end )
 	-- As soon as the server called ent:SetNetVar( "Owner", ply:Nick() ), the owner's name would be broadcasted to all clients.
@@ -94,12 +94,12 @@ elseif ( CLIENT ) then
 		
 		owner = owner or "N/A" -- until we have the actual owner's name, we can just use N/A
 		
-		surface.SetFont( "Trebuchet MS" )
+		surface.SetFont( "default" )
 		local w, h = surface.GetTextSize( owner )
 		local x = ScrW() - w - 15
 		local y = ScrH() / 2.3
 		
-		draw.SimpleText( owner, "Trebuchet MS", x, y, color_white, 0, 0 )
+		draw.SimpleText( owner, "default", x, y, color_white, 0, 0 )
 	
 	end )
 	-- when ent:SendNetRequest( "Owner" ) is used on the client, the client will ask the server if it has any data stored on the entity at the key "Owner"
