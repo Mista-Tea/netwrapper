@@ -37,7 +37,8 @@ ENTITY:GetNetVar( key, default )
 Where 'default' is the default value you would like returned if the key doesn't exist.
 If a default value isn't provided and the key doesn't exist, nil will be returned.
 
-* Example:
+##### Example:
+
 If you wanted to network a title on a player when they connect, you could do something like the following:
 ```
 hook.Add( "PlayerInitialSpawn", "SetPlayerTitle", function( ply )
@@ -92,7 +93,7 @@ ENTITY:GetNetRequest( key, default ) -- once the client has received the value f
 Where 'default' is the default value you would like returned if the key doesn't exist.
 If a default value isn't provided and the key doesn't exist, nil will be returned.
 	
-* Example:
+##### Example:
 
 If you want to network the owner's name on props but don't want to flood connecting clients with hundreds of possible net messages, 
 you can do something like the following:
