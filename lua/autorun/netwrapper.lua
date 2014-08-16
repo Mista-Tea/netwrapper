@@ -62,20 +62,20 @@ local base = "netwrapper/"
 if ( SERVER ) then
 
 	-- Server functions
-	include( base.."server/sv_netwrapper.lua" )
+	include( base .. "sv_netwrapper.lua" )
 
 	-- Shared functions
-	include( base.."shared/sh_netwrapper.lua" )
+	include( base .. "sh_netwrapper.lua" )
 
 	-- Client functions
-	AddCSLuaFile( base.."client/cl_netwrapper.lua" )
+	AddCSLuaFile( base .. "cl_netwrapper.lua" )
 	
 elseif ( CLIENT ) then
 	
 	-- Shared functions
-	include( base.."shared/sh_netwrapper.lua" )
+	include( base .. "sh_netwrapper.lua" )
 
 	-- Client functions
-	include( base.."client/cl_netwrapper.lua" )
+	include( base .. "cl_netwrapper.lua" )
 	
 end
