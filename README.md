@@ -1,6 +1,6 @@
-==================
-    NetWrapper
-==================
+==========
+NetWrapper
+==========
 
 The netwrapper library is a simple wrapper over the net library to provide lightweight 
 networking without hassle of dealing with raw net messages or using ENTITY:SetNW* functions.
