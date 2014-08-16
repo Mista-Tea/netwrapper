@@ -123,8 +123,8 @@ if ( SERVER ) then
 		net.Send( ply )
 	end
 	--[[----------------------------------------------------------------------]]--
-	hook.Add( "EntityRemoved", "NetWrapperRemove", function( ent )
-		netwrapper.RemoveNetVars( ent:EntIndex() )
+	hook.Add( "EntityRemoved", "NetWrapperClear", function( ent )
+		netwrapper.ClearData( ent:EntIndex() )
 	end )
 	
 elseif ( CLIENT ) then
@@ -136,11 +136,6 @@ elseif ( CLIENT ) then
 		local value  = net.ReadType( typeid )
 
 		netwrapper.StoreNetVar( entid, key, value )
-	end )
-	--[[----------------------------------------------------------------------]]--
-	net.Receive( "NetWrapperRemove", function( len )
-		local entid = net.ReadUInt( 16 )
-		netwrapper.RemoveNetVars( entid )
 	end )
 	--[[----------------------------------------------------------------------]]--
 	hook.Add( "InitPostEntity", "NetWrapperSync", function()
@@ -194,6 +189,11 @@ elseif ( CLIENT ) then
 		
 		Entity( id ):SetNetRequest( key, value )
 	end )
+	--[[----------------------------------------------------------------------]]--
+	net.Receive( "NetWrapperClear", function( bits )
+		local id = net.ReadUInt( 16 )
+		netwrapper.ClearData( id )
+	end )
 end
 
 
@@ -220,10 +220,6 @@ function netwrapper.GetNetVars( id )
 	return netwrapper.ents[ id ] or {}
 end
 --[[----------------------------------------------------------------------]]--
-function netwrapper.RemoveNetVars( id )
-	netwrapper.ents[ id ] = nil
-end
---[[----------------------------------------------------------------------]]--
 function ENTITY:SetNetRequest( key, value )
 	netwrapper.StoreNetRequest( self:EntIndex(), key, value )
 end
@@ -244,4 +240,15 @@ end
 --[[----------------------------------------------------------------------]]--
 function netwrapper.RemoveNetRequests( id )
 	netwrapper.requests[ id ] = nil
+end
+--[[----------------------------------------------------------------------]]--
+function netwrapper.ClearData( id )
+	netwrapper.ents[ id ]     = nil
+	netwrapper.requests[ id ] = nil
+
+	if ( SERVER ) then
+		net.Start( "NetWrapperClear" )
+			net.WriteUInt( id, 16 )
+		net.Broadcast()
+	end
 end
