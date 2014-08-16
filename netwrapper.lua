@@ -106,21 +106,26 @@ if ( SERVER ) then
 	end
 	--[[----------------------------------------------------------------------]]--
 	net.Receive( "NetWrapperRequest", function( bits, ply )
-		local ent = net.ReadEntity()
+		local id  = net.ReadUInt( 16 )
+		local ent = Entity( id )
 		local key = net.ReadString()
 		
 		if ( ent:GetNetRequest( key ) ~= nil ) then
-			netwrapper.SendNetRequest( ply, ent, key, ent:GetNetRequest( key ) )
+			netwrapper.SendNetRequest( ply, id, key, ent:GetNetRequest( key ) )
 		end
 	end )
 	--[[----------------------------------------------------------------------]]--
-	function netwrapper.SendNetRequest( ply, ent, key, value )
+	function netwrapper.SendNetRequest( ply, id, key, value )
 		net.Start( "NetWrapperRequest" )
-			net.WriteEntity( ent )
+			net.WriteUInt( id, 16 )
 			net.WriteString( key )
 			net.WriteType( value )
 		net.Send( ply )
 	end
+	--[[----------------------------------------------------------------------]]--
+	hook.Add( "EntityRemoved", "NetWrapperRemove", function( ent )
+		netwrapper.RemoveNetVars( ent:EntIndex() )
+	end )
 	
 elseif ( CLIENT ) then
 
@@ -153,40 +158,41 @@ elseif ( CLIENT ) then
 	end )
 	--[[----------------------------------------------------------------------]]--
 	function ENTITY:SendNetRequest( key )
-		netwrapper.SendNetRequest( self, key )
+		netwrapper.SendNetRequest( self:EntIndex(), key )
 	end
 	--[[----------------------------------------------------------------------]]--
-	function netwrapper.SendNetRequest( ent, key )
+	function netwrapper.SendNetRequest( id, key )
+		
 		local requests = netwrapper.requests
 
-		if ( !requests[ ent ] )                  then requests[ ent ] = {} end
-		if ( !requests[ ent ][ "NumRequests" ] ) then requests[ ent ][ "NumRequests" ] = 0 end
-		if ( !requests[ ent ][ "NextRequest" ] ) then requests[ ent ][ "NextRequest" ] = CurTime() end
+		if ( !requests[ id ] )                  then requests[ id ] = {} end
+		if ( !requests[ id ][ "NumRequests" ] ) then requests[ id ][ "NumRequests" ] = 0 end
+		if ( !requests[ id ][ "NextRequest" ] ) then requests[ id ][ "NextRequest" ] = CurTime() end
 		
 		local maxRetries = netwrapper.MaxRequests:GetInt()
 		
 		-- if the client tries to send another request when they have already hit the maximum number of requests, just ignore it
-		if ( maxRetries >= 0 and requests[ ent ][ "NumRequests" ] >= maxRetries ) then return end
+		if ( maxRetries >= 0 and requests[ id ][ "NumRequests" ] >= maxRetries ) then return end
 		
 		-- if the client tries to send another request before the netwrapper_request_delay time has passed, just ignore it
-		if ( requests[ ent ][ "NextRequest" ] > CurTime() ) then return end
+		if ( requests[ id ][ "NextRequest" ] > CurTime() ) then return end
 		
 		net.Start( "NetWrapperRequest" )
-			net.WriteEntity( ent )
+			net.WriteUInt( id, 16 )
 			net.WriteString( key )
 		net.SendToServer()
 		
-		requests[ ent ][ "NextRequest" ] = CurTime() + netwrapper.Delay:GetInt()
-		requests[ ent ][ "NumRequests" ] = requests[ ent ][ "NumRequests" ] + 1
+		requests[ id ][ "NextRequest" ] = CurTime() + netwrapper.Delay:GetInt()
+		requests[ id ][ "NumRequests" ] = requests[ id ][ "NumRequests" ] + 1
 	end
 	--[[----------------------------------------------------------------------]]--
 	net.Receive( "NetWrapperRequest", function( bits )
-		local ent    = net.ReadEntity()
+		local id     = net.ReadUInt( 16 )
 		local key    = net.ReadString()
 		local typeid = net.ReadUInt( 8 )
 		local value  = net.ReadType( typeid )
 		
-		ent:SetNetRequest( key, value )
+		Entity( id ):SetNetRequest( key, value )
 	end )
 end
 
@@ -219,28 +225,23 @@ function netwrapper.RemoveNetVars( id )
 end
 --[[----------------------------------------------------------------------]]--
 function ENTITY:SetNetRequest( key, value )
-	netwrapper.StoreNetRequest( self, key, value )
+	netwrapper.StoreNetRequest( self:EntIndex(), key, value )
 end
 --[[----------------------------------------------------------------------]]--
 function ENTITY:GetNetRequest( key, default )
-	local values = netwrapper.GetNetRequests( self )
+	local values = netwrapper.GetNetRequests( self:EntIndex() )
 	if ( values[ key ] ~= nil ) then return values[ key ] else return default end
 end
 --[[----------------------------------------------------------------------]]--
-function netwrapper.StoreNetRequest( ent, key, value )
-	netwrapper.requests[ ent ] = netwrapper.requests[ ent ] or {}
-	netwrapper.requests[ ent ][ key ] = value
+function netwrapper.StoreNetRequest( id, key, value )
+	netwrapper.requests[ id ] = netwrapper.requests[ id ] or {}
+	netwrapper.requests[ id ][ key ] = value
 end
 --[[----------------------------------------------------------------------]]--
-function netwrapper.GetNetRequests( ent )
-	return netwrapper.requests[ ent ] or {}
+function netwrapper.GetNetRequests( id )
+	return netwrapper.requests[ id ] or {}
 end
 --[[----------------------------------------------------------------------]]--
-function netwrapper.RemoveNetRequests( ent )
-	netwrapper.requests[ ent ] = nil
+function netwrapper.RemoveNetRequests( id )
+	netwrapper.requests[ id ] = nil
 end
---[[----------------------------------------------------------------------]]--
-hook.Add( "EntityRemoved", "NetWrapperRemove", function( ent )
-	netwrapper.RemoveNetVars( ent:EntIndex() )
-	netwrapper.RemoveNetRequests( ent )
-end )
