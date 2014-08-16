@@ -131,19 +131,6 @@ function netwrapper.GetNetVars( id )
 	return netwrapper.ents[ id ] or {}
 end
 
---[[--------------------------------------------------------------------------
---
---	netwrapper.RemoveNetVars( id )
---
---	Removes any data stored at the entity index. When a player disconnects or
---	 an entity is removed, its index in the table will be removed to ensure that
---	 the next entity to use the same index does not use the first entity's data
---	 and become corrupted.
---]]--
-function netwrapper.RemoveNetVars( id )
-	netwrapper.ents[ id ] = nil
-end
-
 
 
 --[[--------------------------------------------------------------------------
@@ -172,7 +159,7 @@ end
 --	 unlike the ENTITY:SetNW* library.
 --]]--
 function ENTITY:SetNetRequest( key, value )
-	netwrapper.StoreNetRequest( self, key, value )
+	netwrapper.StoreNetRequest( self:EntIndex(), key, value )
 end
 
 --[[--------------------------------------------------------------------------
@@ -185,63 +172,60 @@ end
 --	 OR nil if no default was provided and this key hasn't been set.
 --]]--
 function ENTITY:GetNetRequest( key, default )
-	local values = netwrapper.GetNetRequests( self )
+	local values = netwrapper.GetNetRequests( self:EntIndex() )
 	if ( values[ key ] ~= nil ) then return values[ key ] else return default end
 end
 
 --[[--------------------------------------------------------------------------
 --
---	netwrapper.StoreNetRequest( entity, string, * )
+--	netwrapper.StoreNetRequest( number, string, * )
 --
 --	Stores the key/value pair of the entity into a table so that we can
 --	 retrieve them with ENTITY:GetNetRequest( key ).
 --
 --	**See special notes on ENTITY:SetNetRequest()
 --]]--
-function netwrapper.StoreNetRequest( ent, key, value )
-	netwrapper.requests[ ent ] = netwrapper.requests[ ent ] or {}
-	netwrapper.requests[ ent ][ key ] = value
+function netwrapper.StoreNetRequest( id, key, value )
+	netwrapper.requests[ id ] = netwrapper.requests[ id ] or {}
+	netwrapper.requests[ id ][ key ] = value
 end
 
 --[[--------------------------------------------------------------------------
 --
---	netwrapper.GetNetRequests( entity )
+--	netwrapper.GetNetRequests( number )
 --
 --	Retrieves any stored requested data on the given entity, or an empty table if 
 --	 nothing has been stored on the entity yet.
 --]]--
-function netwrapper.GetNetRequests( ent )
-	return netwrapper.requests[ ent ] or {}
+function netwrapper.GetNetRequests( id )
+	return netwrapper.requests[ id ] or {}
 end
 
 --[[--------------------------------------------------------------------------
 --
---	netwrapper.RemoveNetVars( ent )
+--	netwrapper.RemoveNetVars( number )
 --
 --	Removes any data stored at the entity index. When a player disconnects or
 --	 an entity is removed, its index in the table will be removed to ensure that
 --	 the next entity to use the same index does not use the first entity's data
 --	 and become corrupted.
 --]]--
-function netwrapper.RemoveNetRequests( ent )
-	netwrapper.requests[ ent ] = nil
+function netwrapper.RemoveNetRequests( id )
+	netwrapper.requests[ id ] = nil
 end
 
 
 
 --[[--------------------------------------------------------------------------
 --
---	Hook - EntityRemoved( entity )
---	
---	Called when an entity has been removed. This will automatically remove the
---	 data at the entity's index if any was being networked. This will prevent
---	 data corruption where a future entity may be using the data from a previous
---	 entity that used the same EntIndex.
+--	netwrapper.ClearData( id )
 --
---	This now also removes any requests data on the entity to clean the 
---	 netwraper.requests table.
+--	Removes any data stored at the entity index. When a player disconnects or
+--	 an entity is removed, its index in the table will be removed to ensure that
+--	 the next entity to use the same index does not use the first entity's data
+--	 and become corrupted.
 --]]--
-hook.Add( "EntityRemoved", "NetWrapperRemove", function( ent )
-	netwrapper.RemoveNetVars( ent:EntIndex() )
-	netwrapper.RemoveNetRequests( ent )
-end )
+function netwrapper.ClearData( id )
+	netwrapper.ents[ id ]     = nil
+	netwrapper.requests[ id ] = nil
+end

@@ -103,12 +103,12 @@ end )
 --
 --]]--
 function ENTITY:SendNetRequest( key )
-	netwrapper.SendNetRequest( self, key )
+	netwrapper.SendNetRequest( self:EntIndex(), key )
 end
 
 --[[--------------------------------------------------------------------------
 --
---	netwrapper.SendNetRequest( string, entity )
+--	netwrapper.SendNetRequest( number, string )
 --
 --	Sends a request to the server asking for a value stored on the entity with the given key.
 --
@@ -130,28 +130,29 @@ end
 --	 if the client keeps requesting the same key from an entity that will never have data set on it, you can use netwrapper_max_requests to limit the number
 --	 of allowed requests before the client ultimately stops sending requests for the value altogether. The default is -1 (unlimited retries).
 --]]--
-function netwrapper.SendNetRequest( ent, key )
+function netwrapper.SendNetRequest( id, key )
+	
 	local requests = netwrapper.requests
 
-	if ( !requests[ ent ] )                  then requests[ ent ] = {} end
-	if ( !requests[ ent ][ "NumRequests" ] ) then requests[ ent ][ "NumRequests" ] = 0 end
-	if ( !requests[ ent ][ "NextRequest" ] ) then requests[ ent ][ "NextRequest" ] = CurTime() end
+	if ( !requests[ id ] )                  then requests[ id ] = {} end
+	if ( !requests[ id ][ "NumRequests" ] ) then requests[ id ][ "NumRequests" ] = 0 end
+	if ( !requests[ id ][ "NextRequest" ] ) then requests[ id ][ "NextRequest" ] = CurTime() end
 	
 	local maxRetries = netwrapper.MaxRequests:GetInt()
 	
 	-- if the client tries to send another request when they have already hit the maximum number of requests, just ignore it
-	if ( maxRetries >= 0 and requests[ ent ][ "NumRequests" ] >= maxRetries ) then return end
+	if ( maxRetries >= 0 and requests[ id ][ "NumRequests" ] >= maxRetries ) then return end
 	
 	-- if the client tries to send another request before the netwrapper_request_delay time has passed, just ignore it
-	if ( requests[ ent ][ "NextRequest" ] > CurTime() ) then return end
+	if ( requests[ id ][ "NextRequest" ] > CurTime() ) then return end
 	
 	net.Start( "NetWrapperRequest" )
-		net.WriteEntity( ent )
+		net.WriteUInt( id, 16 )
 		net.WriteString( key )
 	net.SendToServer()
 	
-	requests[ ent ][ "NextRequest" ] = CurTime() + netwrapper.Delay:GetInt()
-	requests[ ent ][ "NumRequests" ] = requests[ ent ][ "NumRequests" ] + 1
+	requests[ id ][ "NextRequest" ] = CurTime() + netwrapper.Delay:GetInt()
+	requests[ id ][ "NumRequests" ] = requests[ id ][ "NumRequests" ] + 1
 end
 
 --[[--------------------------------------------------------------------------
@@ -163,10 +164,10 @@ end
 --	 actually has a value stored at the given key.
 --]]--
 net.Receive( "NetWrapperRequest", function( bits )
-	local ent    = net.ReadEntity()
+	local id     = net.ReadUInt( 16 )
 	local key    = net.ReadString()
 	local typeid = net.ReadUInt( 8 )
 	local value  = net.ReadType( typeid )
 	
-	ent:SetNetRequest( key, value )
+	Entity( id ):SetNetRequest( key, value )
 end )

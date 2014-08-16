@@ -136,27 +136,41 @@ end
 --	 name from the server.
 --]]--
 net.Receive( "NetWrapperRequest", function( bits, ply )
-	local ent = net.ReadEntity()
+	local id  = net.ReadUInt( 16 )
+	local ent = Entity( id )
 	local key = net.ReadString()
 	
 	if ( ent:GetNetRequest( key ) ~= nil ) then
-		netwrapper.SendNetRequest( ply, ent, key, ent:GetNetRequest( key ) )
+		netwrapper.SendNetRequest( ply, id, key, ent:GetNetRequest( key ) )
 	end
 end )
 
 --[[--------------------------------------------------------------------------
 --
---	netwrapper.SendNetRequest( player, entity, string, * )
+--	netwrapper.SendNetRequest( player, number, string, * )
 --
 --	Called when a client is asking the server to network a stored value on entity
 --	 with the given key. In combination with ENTITY:SendNetRequest() on the client,
 --	 these functions give you control of when a client asks for entity values to be
 --	 networked to them, unlike the netwrapper.SendNetVar() function.
 --]]--
-function netwrapper.SendNetRequest( ply, ent, key, value )
+function netwrapper.SendNetRequest( ply, id, key, value )
 	net.Start( "NetWrapperRequest" )
-		net.WriteEntity( ent )
+		net.WriteUInt( id, 16 )
 		net.WriteString( key )
 		net.WriteType( value )
 	net.Send( ply )
 end
+
+--[[--------------------------------------------------------------------------
+-- 
+-- 	Hook - EntityRemoved( entity )
+-- 
+-- 	Called when an entity has been removed. This will automatically remove the
+-- 	 data at the entity's index if any was being networked. This will prevent
+-- 	 data corruption where a future entity may be using the data from a previous
+--	 entity that used the same EntIndex
+--]]--
+hook.Add( "EntityRemoved", "NetWrapperRemove", function( ent )
+	netwrapper.ClearData( ent:EntIndex() )
+end )
