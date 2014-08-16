@@ -29,40 +29,44 @@
 		SOFTWARE.
 			
 	Changelog:
-		- April 7th, 2014:
-			- Created
-			- Added to GitHub
-			- Added license in file to make copying into addons not require the LICENSE file
-			- Changed storing/sending Entities to EntIndex
+		Changelog:
+		- March 9th,   2014:    Created
+		- April 5th,   2014:    Added to GitHub
+		- August 15th, 2014:    Added Net Requests
 ----------------------------------------------------------------------------]]
 
 print( "[NetWrapper] Initializing netwrapper library" )
 
 --[[--------------------------------------------------------------------------
---		Namespace Tables 
+-- 	Namespace Tables
 --------------------------------------------------------------------------]]--
 
-netwrapper      = netwrapper      or {}
-netwrapper.ents = netwrapper.ents or {}
+netwrapper          = netwrapper          or {}
+netwrapper.ents     = netwrapper.ents     or {}
+netwrapper.requests = netwrapper.requests or {}
 
 --[[--------------------------------------------------------------------------
---		Localized Variables 
+-- 	Localized Functions & Variables
 --------------------------------------------------------------------------]]--
+
+local net = net
+local util = util
+local pairs = pairs
+local IsEntity = IsEntity
+local CreateConVar = CreateConVar
+local FindMetaTable = FindMetaTable
+local GetConVarNumber = GetConVarNumber
+
+util.AddNetworkString( "NetWrapperVar" )
+util.AddNetworkString( "NetWrapperRequest" )
 
 local ENTITY = FindMetaTable( "Entity" )
 
---[[--------------------------------------------------------------------------
---		Localized Functions 
---------------------------------------------------------------------------]]--
-
-local net      = net
-local hook     = hook
-local util     = util
-local pairs    = pairs
-local IsEntity = IsEntity
+netwrapper.Delay = CreateConVar( "netwrapper_request_delay", 5, bit.bor( FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_SERVER_CAN_EXECUTE ), "The number of seconds before a client can send a net request to the server"  )
+netwrapper.MaxRequests = CreateConVar( "netwrapper_max_requests",  -1, bit.bor( FCVAR_NOTIFY, FCVAR_REPLICATED, FCVAR_SERVER_CAN_EXECUTE ), "The number of requests a client can send when an entity does not have a value stored at the requested key" )
 
 --[[--------------------------------------------------------------------------
---		Namespace Functions
+--	Namespace Functions
 --------------------------------------------------------------------------]]--
 
 if ( SERVER ) then 
@@ -70,15 +74,11 @@ if ( SERVER ) then
 	util.AddNetworkString( "NetWrapper" )
 	util.AddNetworkString( "NetWrapperRemove" )
 
-	--\\----------------------------------------------------------------------\\--
-	net.Receive( "NetWrapper", function( len, ply )
+	--[[----------------------------------------------------------------------]]--
+	net.Receive( "NetWrapperVar", function( len, ply )
 		netwrapper.SyncClient( ply )
 	end )
-	--\\----------------------------------------------------------------------\\--
-	hook.Add( "EntityRemoved", "NetWrapperRemove", function( ent )
-		netwrapper.RemoveNetVars( ent:EntIndex() )
-	end )
-	--\\----------------------------------------------------------------------\\--
+	--[[----------------------------------------------------------------------]]--
 	function netwrapper.SyncClient( ply )
 		for id, values in pairs( netwrapper.ents ) do			
 			for key, value in pairs( values ) do
@@ -91,18 +91,35 @@ if ( SERVER ) then
 			end			
 		end
 	end
-	--\\----------------------------------------------------------------------\\--
+	--[[----------------------------------------------------------------------]]--
 	function netwrapper.BroadcastNetVar( id, key, value )
-		net.Start( "NetWrapper" )
+		net.Start( "NetWrapperVar" )
 			net.WriteUInt( id, 16 )
 			net.WriteString( key )
 			net.WriteType( value )
 		net.Broadcast()
 	end
-	--\\----------------------------------------------------------------------\\--
+	--[[----------------------------------------------------------------------]]--
 	function netwrapper.SendNetVar( ply, id, key, value )
-		net.Start( "NetWrapper" )
+		net.Start( "NetWrapperVar" )
 			net.WriteUInt( id, 16 )
+			net.WriteString( key )
+			net.WriteType( value )
+		net.Send( ply )
+	end
+	--[[----------------------------------------------------------------------]]--
+	net.Receive( "NetWrapperRequest", function( bits, ply )
+		local ent = net.ReadEntity()
+		local key = net.ReadString()
+		
+		if ( ent:GetNetRequest( key ) ~= nil ) then
+			netwrapper.SendNetRequest( ply, ent, key, ent:GetNetRequest( key ) )
+		end
+	end )
+	--[[----------------------------------------------------------------------]]--
+	function netwrapper.SendNetRequest( ply, ent, key, value )
+		net.Start( "NetWrapperRequest" )
+			net.WriteEntity( ent )
 			net.WriteString( key )
 			net.WriteType( value )
 		net.Send( ply )
@@ -110,7 +127,7 @@ if ( SERVER ) then
 	
 elseif ( CLIENT ) then
 
-	net.Receive( "NetWrapper", function( len )
+	net.Receive( "NetWrapperVar", function( len )
 		local entid  = net.ReadUInt( 16 )
 		local key    = net.ReadString()
 		local typeid = net.ReadUInt( 8 )
@@ -118,17 +135,17 @@ elseif ( CLIENT ) then
 
 		netwrapper.StoreNetVar( entid, key, value )
 	end )
-	--\\----------------------------------------------------------------------\\--
+	--[[----------------------------------------------------------------------]]--
 	net.Receive( "NetWrapperRemove", function( len )
 		local entid = net.ReadUInt( 16 )
 		netwrapper.RemoveNetVars( entid )
 	end )
-	--\\----------------------------------------------------------------------\\--
+	--[[----------------------------------------------------------------------]]--
 	hook.Add( "InitPostEntity", "NetWrapperSync", function()
-		net.Start( "NetWrapper" )
+		net.Start( "NetWrapperVar" )
 		net.SendToServer()
 	end )
-	--\\----------------------------------------------------------------------\\--
+	--[[----------------------------------------------------------------------]]--
 	hook.Add( "OnEntityCreated", "NetWrapperSync", function( ent )
 		local id = ent:EntIndex()
 		local values = netwrapper.GetNetVars( id )
@@ -137,11 +154,47 @@ elseif ( CLIENT ) then
 			ent:SetNetVar( key, value )
 		end
 	end )
-	
+	--[[----------------------------------------------------------------------]]--
+	function ENTITY:SendNetRequest( key )
+		netwrapper.SendNetRequest( self, key )
+	end
+	--[[----------------------------------------------------------------------]]--
+	function netwrapper.SendNetRequest( ent, key )
+		local requests = netwrapper.requests
+
+		if ( !requests[ ent ] )                  then requests[ ent ] = {} end
+		if ( !requests[ ent ][ "NumRequests" ] ) then requests[ ent ][ "NumRequests" ] = 0 end
+		if ( !requests[ ent ][ "NextRequest" ] ) then requests[ ent ][ "NextRequest" ] = CurTime() end
+		
+		local maxRetries = netwrapper.MaxRequests:GetInt()
+		
+		-- if the client tries to send another request when they have already hit the maximum number of requests, just ignore it
+		if ( maxRetries >= 0 and requests[ ent ][ "NumRequests" ] >= maxRetries ) then return end
+		
+		-- if the client tries to send another request before the netwrapper_request_delay time has passed, just ignore it
+		if ( requests[ ent ][ "NextRequest" ] > CurTime() ) then return end
+		
+		net.Start( "NetWrapperRequest" )
+			net.WriteEntity( ent )
+			net.WriteString( key )
+		net.SendToServer()
+		
+		requests[ ent ][ "NextRequest" ] = CurTime() + netwrapper.Delay:GetInt()
+		requests[ ent ][ "NumRequests" ] = requests[ ent ][ "NumRequests" ] + 1
+	end
+	--[[----------------------------------------------------------------------]]--
+	net.Receive( "NetWrapperRequest", function( bits )
+		local ent    = net.ReadEntity()
+		local key    = net.ReadString()
+		local typeid = net.ReadUInt( 8 )
+		local value  = net.ReadType( typeid )
+		
+		ent:SetNetRequest( key, value )
+	end )
 end
 
 
---\\----------------------------------------------------------------------\\--
+--[[----------------------------------------------------------------------]]--
 function ENTITY:SetNetVar( key, value )
 	netwrapper.StoreNetVar( self:EntIndex(), key, value )
 	
@@ -149,28 +202,48 @@ function ENTITY:SetNetVar( key, value )
 		netwrapper.BroadcastNetVar( self:EntIndex(), key, value )
 	end
 end
---\\----------------------------------------------------------------------\\--
+--[[----------------------------------------------------------------------]]--
 function ENTITY:GetNetVar( key, default )
 	local values = netwrapper.GetNetVars( self:EntIndex() )
 	if ( values[ key ] ~= nil ) then return values[ key ] else return default end
 end
---\\----------------------------------------------------------------------\\--
+--[[----------------------------------------------------------------------]]--
 function netwrapper.StoreNetVar( id, key, value )
-	netwrapper.ents = netwrapper.ents or {}
 	netwrapper.ents[ id ] = netwrapper.ents[ id ] or {}
 	netwrapper.ents[ id ][ key ] = value
 end
---\\----------------------------------------------------------------------\\--
+--[[----------------------------------------------------------------------]]--
 function netwrapper.GetNetVars( id )
 	return netwrapper.ents[ id ] or {}
 end
---\\----------------------------------------------------------------------\\--
+--[[----------------------------------------------------------------------]]--
 function netwrapper.RemoveNetVars( id )
 	netwrapper.ents[ id ] = nil
-
-	if ( SERVER ) then
-		net.Start( "NetWrapperRemove" )
-			net.WriteUInt( id, 16 )
-		net.Broadcast()
-	end
 end
+--[[----------------------------------------------------------------------]]--
+function ENTITY:SetNetRequest( key, value )
+	netwrapper.StoreNetRequest( self, key, value )
+end
+--[[----------------------------------------------------------------------]]--
+function ENTITY:GetNetRequest( key, default )
+	local values = netwrapper.GetNetRequests( self )
+	if ( values[ key ] ~= nil ) then return values[ key ] else return default end
+end
+--[[----------------------------------------------------------------------]]--
+function netwrapper.StoreNetRequest( ent, key, value )
+	netwrapper.requests[ ent ] = netwrapper.requests[ ent ] or {}
+	netwrapper.requests[ ent ][ key ] = value
+end
+--[[----------------------------------------------------------------------]]--
+function netwrapper.GetNetRequests( ent )
+	return netwrapper.requests[ ent ] or {}
+end
+--[[----------------------------------------------------------------------]]--
+function netwrapper.RemoveNetRequests( ent )
+	netwrapper.requests[ ent ] = nil
+end
+--[[----------------------------------------------------------------------]]--
+hook.Add( "EntityRemoved", "NetWrapperRemove", function( ent )
+	netwrapper.RemoveNetVars( ent:EntIndex() )
+	netwrapper.RemoveNetRequests( ent )
+end )
