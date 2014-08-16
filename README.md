@@ -15,9 +15,11 @@ values you are networking. Once these values have been broadcasted, all connecte
 clients will be able to retrieve the values like you would with the standard networking libraries.
 
 Setting networked values:
+	
 	ENTITY:SetNetVar( key, value )
 	
 Getting networked values:
+	
 	ENTITY:GetNetVar( key, default )
 	
 Where 'default' is the default value you would like returned if the key doesn't exist.
@@ -45,7 +47,7 @@ QUESTIONS & ANSWERS
 ===================
 ------------------------------------------------------------------------------------------------------------------------------
 | Q: What sort of data can I network with this library?                                                                      |
-| -------------------------------------------------------------------------------------------------------------------------- |
+|                                                                                                                            |
 | A: Since this is a wrapper library over the standard net library, all limitations of the net library apply here.           |
 |       For example, you can't network functions or user data.                                                               |
 |                                                                                                                            |
@@ -60,7 +62,7 @@ QUESTIONS & ANSWERS
 |               angle                                                                                                        |
 ------------------------------------------------------------------------------------------------------------------------------
 | Q: How often is the data networked?                                                                                        |
-| -------------------------------------------------------------------------------------------------------------------------- | 
+|                                                                                                                            | 
 | A: Every time you use SetNetVar on an entity, the data will be networked to any clients using net messages.                |
 |                                                                                                                            |
 | Instead of constantly syncing the data even when the data hasn't changed, theoretically reducing network traffic.          |
@@ -74,7 +76,7 @@ QUESTIONS & ANSWERS
 | avoided if you plan on networking large amounts of data on large amounts of entities/players.                              |
 ------------------------------------------------------------------------------------------------------------------------------
 | Q: What happens when clients connect after the data has already been broadcasted?                                          |
-| -------------------------------------------------------------------------------------------------------------------------- |
+|                                                                                                                            |
 | A: When a client fully initializes on the server (during the InitPostEntity hook), they will send a net message to         |
 | the server that requests any data that is currently being networked on entities.                                           |
 |                                                                                                                            |
@@ -83,14 +85,14 @@ QUESTIONS & ANSWERS
 | will return the last networked value we set on them.                                                                       |
 ------------------------------------------------------------------------------------------------------------------------------
 | Q: What happens to the networked data on a player that disconnected, or an entity that was removed?                        |
-| -------------------------------------------------------------------------------------------------------------------------- |
-A: When a player disconnects or an entity is removed, their state will be changed to NULL in our table that holds            |
-all of the entities and values currently being networked. This occurs automatically.                                         |
-| -------------------------------------------------------------------------------------------------------------------------- |
-The next time that a player connects and asks the server for all networked entities, the server will loop through            |
-all of the entities and remove any NULL references that it finds, including any disconnected players or removed              |
-entities.                                                                                                                    |
-| -------------------------------------------------------------------------------------------------------------------------- |
+|                                                                                                                            |
+| A: When a player disconnects or an entity is removed, their state will be changed to NULL in our table that holds          |
+| all of the entities and values currently being networked. This occurs automatically.                                       |
+|                                                                                                                            |
+| The next time that a player connects and asks the server for all networked entities, the server will loop through          |
+| all of the entities and remove any NULL references that it finds, including any disconnected players or removed            |
+| entities.                                                                                                                  |
+|                                                                                                                            |
 | Because of this automatic sensitization of the netwrapper.ents table, you don't have to worry about accidentally using     |
 | NULL references to your connecting players.                                                                                |
 ------------------------------------------------------------------------------------------------------------------------------
