@@ -64,7 +64,7 @@ end )
 ```
 
 #### Net Requests
-Net Requests are a new features in the NetWrapper library. They allow you to determine exactly when a client asks the server
+Net Requests are a new feature in the NetWrapper library. They allow you to determine exactly when a client asks the server
 for a value to be networked to them by using ENTITY:SendNetRequest( key ). 
 
 If the server has set data on the entity with ENTITY:SetNetRequest( key, value ), the value will be sent back to the client
