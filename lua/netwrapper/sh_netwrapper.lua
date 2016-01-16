@@ -86,6 +86,9 @@ netwrapper.MaxRequests = CreateConVar( "netwrapper_max_requests",  -1, bit.bor( 
 --	 unlike the ENTITY:SetNW* library.
 --]]--
 function ENTITY:SetNetVar( key, value )
+	
+	if ( netwrapper.GetNetVars( self:EntIndex() )[ key ] == value ) then return end
+	
 	netwrapper.StoreNetVar( self:EntIndex(), key, value )
 	
 	if ( SERVER ) then 
