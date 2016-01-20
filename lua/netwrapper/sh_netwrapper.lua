@@ -72,7 +72,7 @@ netwrapper.MaxRequests = CreateConVar( "netwrapper_max_requests",  -1, bit.bor( 
 
 --[[--------------------------------------------------------------------------
 --
---	ENTITY:SetNetVar( string, * )
+--	ENTITY:SetNetVar( string, *, boolean [optional] )
 --
 --	Stores the key/value pair of the entity into a table so that we can
 --	 retrieve them with ENTITY:GetNetVar( key ), and to network the data with any 
@@ -84,13 +84,18 @@ netwrapper.MaxRequests = CreateConVar( "netwrapper_max_requests",  -1, bit.bor( 
 --	Setting a new value on the entity using the same key will replace the original value.
 --	 This allows you to change the value's type without having to use a different function,
 --	 unlike the ENTITY:SetNW* library.
+--
+--	Trying to set the same exact value at a key will result in nothing happening. This is
+--	 done to prevent unnecessary networking, since there is generally no reason to network
+--	 the same value consecutively. However, if for any reason you need to network the value
+--	 again, you can set the 3rd argument, 'force', to true.
 --]]--
-function ENTITY:SetNetVar( key, value )
-	
-	if ( netwrapper.GetNetVars( self:EntIndex() )[ key ] == value ) then return end
-	
+function ENTITY:SetNetVar( key, value, force )
+
+	if ( netwrapper.GetNetVars( self:EntIndex() )[ key ] == value and not force ) then return end
+
 	netwrapper.StoreNetVar( self:EntIndex(), key, value )
-	
+
 	if ( SERVER ) then 
 		netwrapper.BroadcastNetVar( self:EntIndex(), key, value )
 	end
