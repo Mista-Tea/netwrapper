@@ -199,9 +199,11 @@ end
 
 
 --[[----------------------------------------------------------------------]]--
-function ENTITY:SetNetVar( key, value )
+function ENTITY:SetNetVar( key, value, force )
+	if ( netwrapper.GetNetVars( self:EntIndex() )[ key ] == value and not force ) then return end
+
 	netwrapper.StoreNetVar( self:EntIndex(), key, value )
-	
+
 	if ( SERVER ) then 
 		netwrapper.BroadcastNetVar( self:EntIndex(), key, value )
 	end
