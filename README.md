@@ -56,7 +56,7 @@ hook.Add( "PostPlayerDraw", "ShowPlayerTitle", function( ply )
     -- if a title hasn't been networked yet, don't try drawing it
     
     local title = ply:GetNetVar( "Title" )
-    if ( !title ) then return end 
+    if ( not title ) then return end 
     
     draw.SimpleText( title, ...  -- etc
 
@@ -106,7 +106,7 @@ Now the value has been stored in the netwrapper.requests table and can be access
 ```
 -- somewhere clientside
 local owner = ent:GetNetRequest( "Owner" )
-if ( !owner ) then ent:SendNetRequest( "Owner" ) end
+if ( not owner ) then ent:SendNetRequest( "Owner" ) end
 ```
 
 Assuming you use the above in a HUDPaint hook or something that gets repeatedly gets called, this will check to see if the 'Owner' value has
